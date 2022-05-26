@@ -4,6 +4,14 @@ const validationsToCause = validations =>
   validations.map(({ message, context: { label } }) => ({ message, field: label }))
 
 const responseMappers = {
+  UnauthorizedError: (error) => ({
+    status: 401,
+    body: {
+      statusCode: 401,
+      error: AuthenticationError.name,
+      message: error.message
+    }
+  }),
   [NotFoundError.name]: (error) => ({
     status: 404,
     body: {

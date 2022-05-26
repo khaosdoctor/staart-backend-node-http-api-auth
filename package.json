@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "express": "^4.17.3",
+    "express-jwt": "^7.7.2",
     "joi": "^17.6.0",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^8.5.1",
