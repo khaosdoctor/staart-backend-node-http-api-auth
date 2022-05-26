@@ -19,6 +19,7 @@
     "express": "^4.17.3",
     "joi": "^17.6.0",
     "js-yaml": "^4.1.0",
+    "jsonwebtoken": "^8.5.1",
     "knex": "^2.0.0",
     "mysql2": "^2.3.3",
     "swagger-ui-express": "^4.4.0"
