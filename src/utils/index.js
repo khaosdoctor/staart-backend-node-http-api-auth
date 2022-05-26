@@ -1,4 +1,4 @@
-const { createHash } = require('crypto')
+const { createHash, timingSafeEqual } = require('crypto')
 
 const wait = (time) =>
   new Promise(resolve =>
@@ -7,7 +7,10 @@ const wait = (time) =>
 
 const encrypt = async (data) => createHash('sha512').update(data).digest('hex')
 
+const safeCompare = async (data, comparison) => timingSafeEqual(Buffer.from(data), Buffer.from(comparison))
+
 module.exports = {
   wait,
-  encrypt
+  encrypt,
+  safeCompare
 }
