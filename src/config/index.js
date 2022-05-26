@@ -18,6 +18,20 @@ const swagger = immutable({
   }),
 })
 
+const jwt = immutable({
+  secret: 'shhhh',
+  expiration: '4h',
+  audience: 'urn:api:client',
+  issuer: 'urn:api:issuer',
+})
+
+const encryption = {
+  salt: 'salt',
+  iterations: 100000,
+  keyLength: 64,
+  digest: 'sha512'
+}
+
 const database = immutable({
   client: 'mysql2',
   connection: immutable({
@@ -35,4 +49,6 @@ const database = immutable({
 module.exports = immutable({
   database,
   swagger,
+  jwt,
+  encryption
 })

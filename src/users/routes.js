@@ -1,11 +1,12 @@
 const { Router } = require('express')
 const Joi = require('joi')
+const jwt = require('jsonwebtoken')
 
 const withAsyncErrorHandler = require('../middlewares/async-error')
-const { basicAuth } = require('../middlewares/basic-auth')
+const { jwtAuth } = require('../middlewares/jwt-auth')
 const validate = require('../middlewares/validate')
-const { encrypt } = require('../utils')
-
+const { encrypt, safeCompare } = require('../utils')
+const { jwt: jwtConfig } = require('../config')
 const { UsersRepository } = require('./repository')
 
 const NameRegex = /^[A-Z][a-z]+$/
@@ -67,7 +68,7 @@ const updateUser = async (req, res) => {
   res.status(200).send(updated)
 }
 
-router.put('/:id', basicAuth(repository), validate(UpdateUserSchema), withAsyncErrorHandler(updateUser))
+router.put('/:id', jwtAuth, validate(UpdateUserSchema), withAsyncErrorHandler(updateUser))
 
 // ************
 // ** delete **
@@ -86,7 +87,7 @@ const deleteUser = async (req, res) => {
   res.status(204).send()
 }
 
-router.delete('/:id', basicAuth(repository), validate(DeleteUserSchema), withAsyncErrorHandler(deleteUser))
+router.delete('/:id', jwtAuth, validate(DeleteUserSchema), withAsyncErrorHandler(deleteUser))
 
 // **********
 // ** read **
@@ -110,6 +111,37 @@ const getUser = async (req, res) => {
 }
 
 router.get('/', withAsyncErrorHandler(listUsers))
-router.get('/:id', basicAuth(repository), validate(GetUserSchema), withAsyncErrorHandler(getUser))
+router.get('/:id', jwtAuth, validate(GetUserSchema), withAsyncErrorHandler(getUser))
+
+// **********
+// ** login **
+// **********
+
+const LoginUserSchema = {
+  body: Joi.object({
+    username: Joi.string().email().required(),
+    password: Joi.string().min(5).max(255).required(),
+  })
+}
+
+const loginUser = async (req, res) => {
+  const { username, password } = req.body
+  const { password: userPassword, ...user } = await repository.getByLogin(username)
+  if (!user) throw new AuthenticationError('Invalid credentials')
+
+  const encrypted = await encrypt(password)
+  console.log({ username, password, userPassword, encrypted })
+  const isValid = await safeCompare(encrypted, userPassword)
+  if (!isValid) throw new AuthenticationError('Invalid credentials')
+
+  const token = jwt.sign(user, jwtConfig.secret, {
+    expiresIn: jwtConfig.expiration,
+    audience: jwtConfig.audience,
+    issuer: jwtConfig.issuer
+  })
+  res.status(200).send({ token })
+}
+
+router.post('/login', validate(LoginUserSchema), withAsyncErrorHandler(loginUser))
 
 module.exports = router

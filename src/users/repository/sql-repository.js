@@ -59,10 +59,10 @@ const SQLRepository = () => {
       .then(handleNotFound(id))
       .then(decodeUser)
 
-  const getByLoginData = (username, password) => knex
+  const getByLogin = (username) => knex
     .select('*')
     .from('users')
-    .where({ username, password })
+    .where({ username })
     .then(handleNotFound(username))
     .then(decodeUser)
 
@@ -100,7 +100,7 @@ const SQLRepository = () => {
     insert,
     update,
     del,
-    getByLoginData
+    getByLogin
   }
 
 }

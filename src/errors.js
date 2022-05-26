@@ -6,10 +6,9 @@ class DomainError extends Error {
 }
 
 class AuthenticationError extends DomainError {
-  constructor (username, cause = 'not specified') {
+  constructor (cause = 'not specified') {
     super(`The user could not be authenticated`)
     this.name = this.constructor.name
-    this.username = username
     this.cause = cause
   }
 }
