@@ -1,7 +1,7 @@
 const { Router } = require('express')
 const Joi = require('joi')
 const jwt = require('jsonwebtoken')
-
+const { AuthenticationError, NotFoundError } = require('../errors')
 const withAsyncErrorHandler = require('../middlewares/async-error')
 const { jwtAuth } = require('../middlewares/jwt-auth')
 const validate = require('../middlewares/validate')
@@ -126,20 +126,22 @@ const LoginUserSchema = {
 
 const loginUser = async (req, res) => {
   const { username, password } = req.body
-  const { password: userPassword, ...user } = await repository.getByLogin(username)
-  if (!user) throw new AuthenticationError('Invalid credentials')
+  try {
+    const { password: userPassword, ...user } = await repository.getByLogin(username)
+    const encrypted = await encrypt(password)
+    console.log({ username, password, userPassword, encrypted })
+    const isValid = await safeCompare(encrypted, userPassword)
+    if (!isValid) throw new AuthenticationError('Invalid credentials')
 
-  const encrypted = await encrypt(password)
-  console.log({ username, password, userPassword, encrypted })
-  const isValid = await safeCompare(encrypted, userPassword)
-  if (!isValid) throw new AuthenticationError('Invalid credentials')
-
-  const token = jwt.sign(user, jwtConfig.secret, {
-    expiresIn: jwtConfig.expiration,
-    audience: jwtConfig.audience,
-    issuer: jwtConfig.issuer
-  })
-  res.status(200).send({ token })
+    const token = jwt.sign(user, jwtConfig.secret, {
+      expiresIn: jwtConfig.expiration,
+      audience: jwtConfig.audience,
+      issuer: jwtConfig.issuer
+    })
+    res.status(200).send({ token })
+  } catch (err) {
+    if (err instanceof NotFoundError) throw new AuthenticationError('Invalid credentials')
+  }
 }
 
 router.post('/login', validate(LoginUserSchema), withAsyncErrorHandler(loginUser))
