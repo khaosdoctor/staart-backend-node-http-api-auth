@@ -2,7 +2,9 @@ const { Router } = require('express')
 const Joi = require('joi')
 
 const withAsyncErrorHandler = require('../middlewares/async-error')
+const { basicAuth } = require('../middlewares/basic-auth')
 const validate = require('../middlewares/validate')
+const { encrypt } = require('../utils')
 
 const { UsersRepository } = require('./repository')
 
@@ -26,15 +28,15 @@ const repository = UsersRepository()
 const CreateUserBodySchema = {
   body: Joi.object({
     username: Joi.string().email().required(),
-    password: Joi.string().min(5).max(40).required(),
+    password: Joi.string().min(5).max(255).required(),
     firstName: Joi.string().regex(NameRegex).required(),
     lastName: Joi.string().regex(NameRegex).required(),
   })
 }
 
 const createUser = async (req, res) => {
-  const user = req.body
-  const inserted = await repository.insert(user)
+  const user = { ...req.body, password: await encrypt(req.body.password) }
+  const { password, ...inserted } = await repository.insert(user)
   const location = `/api/users/${inserted.id}`
   res.status(201).header('Location', location).send(inserted)
 }
@@ -50,7 +52,7 @@ const UpdateUserSchema = {
     id: Joi.number().required(),
   }),
   body: Joi.object({
-    password: Joi.string().min(5).max(40),
+    password: Joi.string().min(5).max(255),
     firstName: Joi.string().regex(NameRegex),
     lastName: Joi.string().regex(NameRegex),
   }).or('password', 'firstName', 'lastName')
@@ -65,7 +67,7 @@ const updateUser = async (req, res) => {
   res.status(200).send(updated)
 }
 
-router.put('/:id', validate(UpdateUserSchema), withAsyncErrorHandler(updateUser))
+router.put('/:id', basicAuth(repository), validate(UpdateUserSchema), withAsyncErrorHandler(updateUser))
 
 // ************
 // ** delete **
@@ -84,7 +86,7 @@ const deleteUser = async (req, res) => {
   res.status(204).send()
 }
 
-router.delete('/:id', validate(DeleteUserSchema), withAsyncErrorHandler(deleteUser))
+router.delete('/:id', basicAuth(repository), validate(DeleteUserSchema), withAsyncErrorHandler(deleteUser))
 
 // **********
 // ** read **
@@ -108,6 +110,6 @@ const getUser = async (req, res) => {
 }
 
 router.get('/', withAsyncErrorHandler(listUsers))
-router.get('/:id', validate(GetUserSchema), withAsyncErrorHandler(getUser))
+router.get('/:id', basicAuth(repository), validate(GetUserSchema), withAsyncErrorHandler(getUser))
 
 module.exports = router

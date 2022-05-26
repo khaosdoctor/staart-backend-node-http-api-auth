@@ -59,6 +59,13 @@ const SQLRepository = () => {
       .then(handleNotFound(id))
       .then(decodeUser)
 
+  const getByLoginData = (username, password) => knex
+    .select('*')
+    .from('users')
+    .where({ username, password })
+    .then(handleNotFound(username))
+    .then(decodeUser)
+
   const insert = (user) =>
     // mysql não tem suporte pra INSERT ... RETURNING <props>
     // (INSERT sempre retorna o id do registro criado)
@@ -93,6 +100,7 @@ const SQLRepository = () => {
     insert,
     update,
     del,
+    getByLoginData
   }
 
 }
