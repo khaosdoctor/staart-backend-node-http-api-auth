@@ -13,6 +13,13 @@ class AuthenticationError extends DomainError {
   }
 }
 
+class AuthorizationError extends DomainError {
+  constructor (cause = 'not specified') {
+    super(`The user is not authorized`)
+    this.cause = cause
+  }
+}
+
 class NotFoundError extends DomainError {
   constructor({ resourceName, resourceId }) {
     super(`Resource '${resourceName}' with identifier '${resourceId}' not found`)
@@ -36,4 +43,5 @@ module.exports = {
   ValidationError,
   AuthenticationError,
   ConflictError,
+  AuthorizationError,
 }
