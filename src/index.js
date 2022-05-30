@@ -8,7 +8,6 @@ const docs = require('./middlewares/docs')
 
 // routes
 const todos = require('./todos/routes')
-const hello = require('./hello/routes')
 const users = require('./users/routes')
 
 const app = express()
@@ -16,7 +15,6 @@ const router = express.Router()
 
 router.use(express.json())
 router.use(logger())
-router.use('/hello', hello)
 router.use('/todos', todos)
 router.use('/users', users)
 router.use(defaultHandler)
